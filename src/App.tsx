@@ -728,99 +728,42 @@ export default function App() {
                     {w.surname} {w.first_name}
                   </b>
 
-                  <span>
-                    {w.days
-                      .map(
-                        (d, i) =>
-                          `${DAY_NAMES[i]}: ${
-                            d.off
-                              ? "выходной"
-                              : d.from + "–" + d.to
-                          }`
-                      )
-                      .join(" · ")}
-                  </span>
+                                    <div
+                    style={{
+                      display: "grid",
+                      gap: "6px",
+                      marginTop: "10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {w.days.map((d, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: "14px",
+                          alignItems: "center",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <b style={{ width: "24px" }}>
+                          {DAY_NAMES[i]}
+                        </b>
+                        <span>
+                          {d.off
+                            ? "Выходной"
+                            : `${d.from}–${d.to}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-                  <small>{w.restriction_text}</small>
+                  {w.restriction_text && (
+                    <small>{w.restriction_text}</small>
+                  )}
                 </div>
               ))
             )}
-          </section>
-
-          <section className="glass panel section">
-            <div className="section-head">
-              <h2>Распределение по точкам</h2>
-              <span className="pill">07:00–22:00</span>
-            </div>
-
-            <label className="field">
-              <span>День недели</span>
-              <select
-                value={selectedDay}
-                onChange={(e) =>
-                  setSelectedDay(Number(e.target.value))
-                }
-              >
-                {DAY_NAMES.map((d, i) => (
-                  <option value={i} key={i}>
-                    {d} · {dateLabel(weekDates[i])}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {POINTS.map((point) => (
-              <div className="assignment-row" key={point}>
-                <strong>{point}</strong>
-
-                <select
-                  value={
-                    assigned.find((x) => x.point === point)
-                      ?.employee_id || ""
-                  }
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    addAssignment(
-                      point,
-                      id,
-                      "07:00",
-                      "22:00"
-                    );
-                  }}
-                >
-                  <option value="">Не назначен</option>
-
-                  {employees.map((employee) => (
-                    <option
-                      key={employee.id}
-                      value={employee.id}
-                    >
-                      {employee.surname} {employee.first_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-
-            {overlapping && (
-              <p className="warning">
-                Один сотрудник назначен одновременно на несколько
-                точек.
-              </p>
-            )}
-
-            <button
-              className="primary"
-              onClick={saveAssignment}
-            >
-              Сохранить назначения
-            </button>
-
-            <p className="footnote">
-              Это базовое распределение: для нескольких смен и
-              параллельных сотрудников на одной точке потребуется
-              расширить редактор графика.
-            </p>
           </section>
         </>
       )}
