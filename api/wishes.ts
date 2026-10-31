@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sqlClient } from "./_db";
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+import { sqlClient } from "./_db.js";
+sqlClient } from "./_db";export default async function handler(req: VercelRequest, res: VercelResponse) {
   if(req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
   try {
     const {employee_id,week_start,days,restriction_text="",hourly_rate}=req.body||{};
