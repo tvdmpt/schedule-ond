@@ -2,11 +2,45 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { sqlClient } from "./_db.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
   try {
+    const sql = sqlClient();
+
+    // Удаление пожелания — только для менеджера
+    if (req.method === "DELETE") {
+      const { employee_id, week_start, password } = req.body || {};
+      const expected = process.env.ADMIN_PASSWORD;
+
+      if (!expected || password !== expected) {
+        return res.status(401).json({ error: "Нет доступа к удалению" });
+      }
+
+      if (!employee_id || !week_start) {
+        return res.status(400).json({
+          error: "Не указаны сотрудник и неделя",
+        });
+      }
+
+      const deleted = await sql`
+        DELETE FROM wishes
+        WHERE employee_id = ${employee_id}
+          AND week_start = ${week_start}
+        RETURNING id
+      `;
+
+      if (!deleted.length) {
+        return res.status(404).json({
+          error: "Пожелание не найдено",
+        });
+      }
+
+      return res.status(200).json({ ok: true });
+    }
+
+    // Отправка или обновление пожелания
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
     const {
       employee_id,
       week_start,
@@ -40,8 +74,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
     }
-
-    const sql = sqlClient();
 
     const employee = await sql`
       UPDATE employees
