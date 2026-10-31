@@ -117,6 +117,7 @@ export default function App() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [selectedDay, setSelectedDay] = useState(0);
+  const [wishDay, setWishDay] = useState(0);
 
   const [assignments, setAssignments] = useState<
     Record<string, Assignment[]>
@@ -716,53 +717,65 @@ export default function App() {
                 {wishes.length} отправлено
               </span>
             </div>
+<div className="field">
+  <label>Показать сотрудников по дню</label>
+  <select
+    value={wishDay}
+    onChange={(e) => setWishDay(Number(e.target.value))}
+  >
+    {DAY_NAMES.map((day, i) => (
+      <option value={i} key={i}>
+        {day} · {dateLabel(weekDates[i])}
+      </option>
+    ))}
+  </select>
+</div>
 
-            {wishes.length === 0 ? (
-              <p className="muted">
-                Пока нет отправленных пожеланий.
-              </p>
-            ) : (
-              wishes.map((w) => (
-                <div className="wish" key={w.employee_id}>
-                  <b>
-                    {w.surname} {w.first_name}
-                  </b>
+{(() => {
+  const available = wishes
+    .filter((w) => {
+      const day = w.days?.[wishDay];
+      return day && !day.off && day.from && day.to;
+    })
+    .sort((a, b) =>
+      a.days[wishDay].from.localeCompare(
+        b.days[wishDay].from
+      )
+    );
 
-                                    <div
-                    style={{
-                      display: "grid",
-                      gap: "6px",
-                      marginTop: "10px",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    {w.days.map((d, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: "flex",
-                          gap: "14px",
-                          alignItems: "center",
-                          fontSize: "13px",
-                        }}
-                      >
-                        <b style={{ width: "24px" }}>
-                          {DAY_NAMES[i]}
-                        </b>
-                        <span>
-                          {d.off
-                            ? "Выходной"
-                            : `${d.from}–${d.to}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+  if (available.length === 0) {
+    return (
+      <p className="muted">
+        В этот день никто не указал доступность.
+      </p>
+    );
+  }
 
-                  {w.restriction_text && (
-                    <small>{w.restriction_text}</small>
-                  )}
-                </div>
-              ))
+  return available.map((w) => {
+    const day = w.days[wishDay];
+
+    return (
+      <div className="wish" key={w.employee_id}>
+        <b>
+          {w.surname} {w.first_name}
+        </b>
+
+        <div style={{ marginTop: "8px" }}>
+          <strong>{day.from}–{day.to}</strong>
+        </div>
+
+        {day.late && (
+          <small>Готов задержаться ещё на час</small>
+        )}
+
+        {w.restriction_text && (
+          <small>{w.restriction_text}</small>
+        )}
+      </div>
+    );
+  });
+})()}
+          
             )}
           </section>
         </>
