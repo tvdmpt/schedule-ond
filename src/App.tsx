@@ -723,25 +723,58 @@ export default function App() {
                 Пока нет отправленных пожеланий.
               </p>
             ) : (
-              wishes.map((w) => (
-                <div className="wish" key={w.employee_id}>
-                  <b>
-                    {w.surname} {w.first_name}
-                  </b>
+             wishes.map((w) => (
+  <div className="wish" key={w.employee_id}>
+    <b>
+      {w.surname} {w.first_name}
+    </b>
 
-                  <small>
-                    Обновлено:{" "}
-                    {new Date(w.updated_at).toLocaleString("ru-RU")}
-                  </small>
+    <small>
+      Обновлено:{" "}
+      {new Date(w.updated_at).toLocaleString("ru-RU")}
+    </small>
 
-                  {w.restriction_text && (
-                    <small>
-                      Ограничения: {w.restriction_text}
-                    </small>
-                  )}
-                </div>
-              ))
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+      gap: "8px",
+      marginTop: "12px"
+    }}>
+      {DAY_NAMES.map((day, i) => {
+        const d = w.days?.[i];
+
+        return (
+          <div
+            key={day}
+            style={{
+              padding: "10px",
+              border: "1px solid #ffffff20",
+              borderRadius: "10px"
+            }}
+          >
+            <b>{day}</b>
+            <div style={{ marginTop: "5px" }}>
+              {!d
+                ? "Нет данных"
+                : d.off
+                ? "Выходной"
+                : `${d.from}–${d.to}`}
+            </div>
+            {d?.late && (
+              <small>+1 час разрешён</small>
             )}
+          </div>
+        );
+      })}
+    </div>
+
+    {w.restriction_text && (
+      <small style={{ display: "block", marginTop: "10px" }}>
+        Ограничения: {w.restriction_text}
+      </small>
+    )}
+  </div>
+))}
           </section>
 
           <section className="glass panel">
