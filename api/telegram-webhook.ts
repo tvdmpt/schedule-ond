@@ -34,7 +34,7 @@ export default async function handler(
               inline_keyboard: [
                 [
                   {
-                    text: "Запустить Schedule",
+                    text: "Начать👇",
                     web_app: { url: APP_URL },
                   },
                 ],
