@@ -710,71 +710,121 @@ export default function App() {
             </button>
           </div>
 
-          <section className="glass panel">
+                    <section className="glass panel">
             <div className="section-head">
               <h2>Пожелания сотрудников</h2>
               <span className="pill">
                 {wishes.length} отправлено
               </span>
             </div>
-<div className="field">
-  <label>Показать сотрудников по дню</label>
-  <select
-    value={wishDay}
-    onChange={(e) => setWishDay(Number(e.target.value))}
-  >
-    {DAY_NAMES.map((day, i) => (
-      <option value={i} key={i}>
-        {day} · {dateLabel(weekDates[i])}
-      </option>
-    ))}
-  </select>
-</div>
 
-{(() => {
-  const available = wishes
-    .filter((w) => {
-      const day = w.days?.[wishDay];
-      return day && !day.off && day.from && day.to;
-    })
-    .sort((a, b) =>
-      a.days[wishDay].from.localeCompare(
-        b.days[wishDay].from
-      )
-    );
+            {wishes.length === 0 ? (
+              <p className="muted">
+                Пока нет отправленных пожеланий.
+              </p>
+            ) : (
+              wishes.map((w) => (
+                <div className="wish" key={w.employee_id}>
+                  <b>
+                    {w.surname} {w.first_name}
+                  </b>
 
-  if (available.length === 0) {
-    return (
-      <p className="muted">
-        В этот день никто не указал доступность.
-      </p>
-    );
-  }
+                  <small>
+                    Обновлено:{" "}
+                    {new Date(w.updated_at).toLocaleString("ru-RU")}
+                  </small>
 
-  return available.map((w) => {
-    const day = w.days[wishDay];
+                  {w.restriction_text && (
+                    <small>
+                      Ограничения: {w.restriction_text}
+                    </small>
+                  )}
+                </div>
+              ))
+            )}
+          </section>
 
-    return (
-      <div className="wish" key={w.employee_id}>
-        <b>
-          {w.surname} {w.first_name}
-        </b>
+          <section className="glass panel">
+            <div className="section-head">
+              <h2>Доступность сотрудников</h2>
+            </div>
 
-        <div style={{ marginTop: "8px" }}>
-          <strong>{day.from}–{day.to}</strong>
-        </div>
+            <div className="field">
+              <label>Выберите день</label>
+              <select
+                value={wishDay}
+                onChange={(e) =>
+                  setWishDay(Number(e.target.value))
+                }
+              >
+                {DAY_NAMES.map((day, i) => (
+                  <option value={i} key={i}>
+                    {day} · {dateLabel(weekDates[i])}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {day.late && (
-          <small>Готов задержаться ещё на час</small>
-        )}
+            <table style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              textAlign: "left"
+            }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: "12px 6px" }}>
+                    Сотрудник
+                  </th>
+                  <th style={{ padding: "12px 6px" }}>
+                    Время
+                  </th>
+                </tr>
+              </thead>
 
-        {w.restriction_text && (
-          <small>{w.restriction_text}</small>
-        )}
-      </div>
-    );
-  });
-})()}
+              <tbody>
+                {wishes
+                  .filter((w) => {
+                    const day = w.days?.[wishDay];
+                    return day && !day.off && day.from && day.to;
+                  })
+                  .sort((a, b) =>
+                    a.days[wishDay].from.localeCompare(
+                      b.days[wishDay].from
+                    )
+                  )
+                  .map((w) => {
+                    const day = w.days[wishDay];
+
+                    return (
+                      <tr key={w.employee_id}>
+                        <td style={{
+                          padding: "12px 6px",
+                          borderTop: "1px solid #ffffff18"
+                        }}>
+                          {w.surname} {w.first_name}
+                        </td>
+
+                        <td style={{
+                          padding: "12px 6px",
+                          borderTop: "1px solid #ffffff18",
+                          whiteSpace: "nowrap"
+                        }}>
+                          {day.from}–{day.to}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+
+            {wishes.filter((w) => {
+              const day = w.days?.[wishDay];
+              return day && !day.off && day.from && day.to;
+            }).length === 0 && (
+              <p className="muted">
+                На этот день нет доступных сотрудников.
+              </p>
+            )}
           </section>
         </>
       )}
