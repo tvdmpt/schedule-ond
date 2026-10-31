@@ -22,6 +22,7 @@ type Wish = {
   days: DayWish[];
   restriction_text: string;
   updated_at: string;
+  week_start: string;
 };
 
 type Assignment = {
@@ -197,6 +198,25 @@ export default function App() {
       if (path === "/api/wishes") {
         const storedWishes = readLocal("wishes", []);
 
+        // Удаление пожелания
+        if (init?.method === "DELETE") {
+          const next = storedWishes.filter(
+            (x: any) =>
+              !(
+                x.employee_id === body.employee_id &&
+                x.week_start === body.week_start
+              )
+          );
+
+          localStorage.setItem(
+            "sg-wishes",
+            JSON.stringify(next)
+          );
+
+          return { ok: true };
+        }
+
+        // Создание / обновление пожелания
         const item = {
           ...body,
           updated_at: new Date().toISOString(),
@@ -341,6 +361,37 @@ export default function App() {
           ? e.message
           : "Не удалось отправить пожелания"
       );
+    }
+  }
+
+  async function deleteWish(w: Wish) {
+    const confirmed = window.confirm(
+      `Удалить пожелание ${w.surname} ${w.first_name} за неделю ${w.week_start}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api("/api/wishes", {
+        method: "DELETE",
+        body: JSON.stringify({
+          employee_id: w.employee_id,
+          week_start: w.week_start,
+          password: managerPassword,
+        }),
+      });
+
+      setWishes((old) =>
+        old.filter(
+          (item) =>
+            !(item.employee_id === w.employee_id &&
+              item.week_start === w.week_start)
+        )
+      );
+
+      show("Пожелание удалено");
+    } catch (e) {
+      show(e instanceof Error ? e.message : "Не удалось удалить пожелание");
     }
   }
 
@@ -710,7 +761,7 @@ export default function App() {
             </button>
           </div>
 
-                    <section className="glass panel">
+          <section className="glass panel">
             <div className="section-head">
               <h2>Пожелания сотрудников</h2>
               <span className="pill">
@@ -723,58 +774,70 @@ export default function App() {
                 Пока нет отправленных пожеланий.
               </p>
             ) : (
-             wishes.map((w) => (
-  <div className="wish" key={w.employee_id}>
-    <b>
-      {w.surname} {w.first_name}
-    </b>
+              wishes.map((w) => (
+                <div
+                  className="wish"
+                  key={`${w.employee_id}-${w.week_start}`}
+                >
+                  <b>
+                    {w.surname} {w.first_name}
+                  </b>
 
-    <small>
-      Обновлено:{" "}
-      {new Date(w.updated_at).toLocaleString("ru-RU")}
-    </small>
+                  <small>
+                    Обновлено:{" "}
+                    {new Date(w.updated_at).toLocaleString("ru-RU")}
+                  </small>
 
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-      gap: "8px",
-      marginTop: "12px"
-    }}>
-      {DAY_NAMES.map((day, i) => {
-        const d = w.days?.[i];
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "8px",
+                    marginTop: "12px"
+                  }}>
+                    {DAY_NAMES.map((day, i) => {
+                      const d = w.days?.[i];
 
-        return (
-          <div
-            key={day}
-            style={{
-              padding: "10px",
-              border: "1px solid #ffffff20",
-              borderRadius: "10px"
-            }}
-          >
-            <b>{day}</b>
-            <div style={{ marginTop: "5px" }}>
-              {!d
-                ? "Нет данных"
-                : d.off
-                ? "Выходной"
-                : `${d.from}–${d.to}`}
-            </div>
-            {d?.late && (
-              <small>+1 час разрешён</small>
+                      return (
+                        <div
+                          key={day}
+                          style={{
+                            padding: "10px",
+                            border: "1px solid #ffffff20",
+                            borderRadius: "10px"
+                          }}
+                        >
+                          <b>{day}</b>
+                          <div style={{ marginTop: "5px" }}>
+                            {!d
+                              ? "Нет данных"
+                              : d.off
+                              ? "Выходной"
+                              : `${d.from}–${d.to}`}
+                          </div>
+                          {d?.late && (
+                            <small>+1 час разрешён</small>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {w.restriction_text && (
+                    <small style={{ display: "block", marginTop: "10px" }}>
+                      Ограничения: {w.restriction_text}
+                    </small>
+                  )}
+
+                  <button
+                    className="ghost"
+                    style={{ marginTop: "12px" }}
+                    onClick={() => deleteWish(w)}
+                  >
+                    Удалить пожелание
+                  </button>
+                </div>
+              ))
             )}
-          </div>
-        );
-      })}
-    </div>
-
-    {w.restriction_text && (
-      <small style={{ display: "block", marginTop: "10px" }}>
-        Ограничения: {w.restriction_text}
-      </small>
-    )}
-  </div>
-)))}
           </section>
 
           <section className="glass panel">
@@ -829,7 +892,7 @@ export default function App() {
                     const day = w.days[wishDay];
 
                     return (
-                      <tr key={w.employee_id}>
+                      <tr key={`${w.employee_id}-${w.week_start}`}>
                         <td style={{
                           padding: "12px 6px",
                           borderTop: "1px solid #ffffff18"
