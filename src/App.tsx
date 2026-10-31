@@ -774,7 +774,7 @@ export default function App() {
       </small>
     )}
   </div>
-))}
+)))}
           </section>
 
           <section className="glass panel">
